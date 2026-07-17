@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="io.github.aimi.rag.workflow.log.mybatis.mapper.FlowExecutionMapper">
+
+    <insert id="insert">
+        INSERT INTO flow_execution (id, flow_name, status, start_time, input_context)
+        VALUES (#{id}, #{flowName}, #{status}, #{startTime}, #{inputContext})
+    </insert>
+
+    <select id="selectById" resultType="io.github.aimi.rag.workflow.log.mybatis.entity.FlowExecution">
+        SELECT id, flow_name, status, start_time, end_time, input_context
+        FROM flow_execution
+        WHERE id = #{id}
+    </select>
+
+    <update id="updateStatus">
+        UPDATE flow_execution
+        SET status = #{status}, end_time = #{endTime}
+        WHERE id = #{id}
+    </update>
+
+</mapper>

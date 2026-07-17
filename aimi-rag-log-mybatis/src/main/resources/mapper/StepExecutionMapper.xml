@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="io.github.aimi.rag.workflow.log.mybatis.mapper.StepExecutionMapper">
+
+    <insert id="insert">
+        INSERT INTO step_execution (id, execution_id, step_name, status, start_time, end_time)
+        VALUES (#{id}, #{executionId}, #{stepName}, #{status}, #{startTime}, #{endTime})
+    </insert>
+
+    <select id="selectByExecutionId" resultType="io.github.aimi.rag.workflow.log.mybatis.entity.StepExecution">
+        SELECT id, execution_id, step_name, status, start_time, end_time
+        FROM step_execution
+        WHERE execution_id = #{executionId}
+        ORDER BY start_time
+    </select>
+
+</mapper>

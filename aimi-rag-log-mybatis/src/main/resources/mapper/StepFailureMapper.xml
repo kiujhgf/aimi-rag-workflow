@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="io.github.aimi.rag.workflow.log.mybatis.mapper.StepFailureMapper">
+
+    <insert id="insert">
+        INSERT INTO step_failure (id, execution_id, step_name, error_message, error_stack, timestamp)
+        VALUES (#{id}, #{executionId}, #{stepName}, #{errorMessage}, #{errorStack}, #{timestamp})
+    </insert>
+
+</mapper>
