@@ -16,6 +16,9 @@ import io.github.aimi.rag.workflow.ingest.model.StorageResult;
 import io.github.aimi.rag.workflow.ingest.step.chunking.FixedSizeChunkingStep;
 import io.github.aimi.rag.workflow.ingest.step.input.StringInputStep;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.ai.document.MetadataMode;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.openai.OpenAiEmbeddingModel;
@@ -26,19 +29,33 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+@SpringBootTest
+@ActiveProfiles("test")
 public class TestRemoteConn {
+
+    @Value("${spring.ai.openai.api-key}")
+    private String apiKey;
+
+    @Value("${spring.ai.openai.base-url}")
+    private String baseUrl;
+
+    @Value("${es.host}")
+    private String esHost;
+
+    @Value("${es.port}")
+    private int esPort;
 
     @Test
     public void testEmbAndEs() throws IOException, InterruptedException {
-        EsClient esClient = new EsClient("192.168.1.6", 9200);
+        EsClient esClient = new EsClient(esHost, esPort);
 
-        OpenAiApi.Builder apiBuilder = OpenAiApi.builder().apiKey("sk-39b0268da1b24120aaf91d55b629339c");
-        apiBuilder.baseUrl("https://llm-u81mf9psloy2h05c.cn-beijing.maas.aliyuncs.com/compatible-mode");
+        OpenAiApi.Builder apiBuilder = OpenAiApi.builder().apiKey(apiKey);
+        apiBuilder.baseUrl(baseUrl);
         OpenAiApi openAiApi = apiBuilder.build();
 
         OpenAiEmbeddingOptions options = OpenAiEmbeddingOptions.builder()
                 .model("text-embedding-v4")
-                .dimensions(1024)
+                .dimensions(Integer.valueOf(1024))
                 .build();
 
         EmbeddingModel embeddingModel = new OpenAiEmbeddingModel(openAiApi, MetadataMode.EMBED, options);

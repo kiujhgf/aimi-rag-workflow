@@ -1,0 +1,9 @@
+spring:
+  ai:
+    openai:
+      api-key: ENC(Hc9g6EkOn4I7fu1uknfZel6aMPVLC/oa+fJKRpwciGsdevmwqFQTjXxqC6Odphm+X7q00ZDH0NC7pMYrMd0Pj8vr0Trb9HqW7ew79mXW104=)
+      base-url: https://llm-u81mf9psloy2h05c.cn-beijing.maas.aliyuncs.com/compatible-mode
+
+es:
+  host: 192.168.1.10
+  port: 9200

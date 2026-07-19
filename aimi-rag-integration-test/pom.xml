@@ -25,12 +25,22 @@
         </dependency>
         <dependency>
             <groupId>io.github.aimi.rag.workflow</groupId>
+            <artifactId>aimi-rag-ingest</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.aimi.rag.workflow</groupId>
             <artifactId>aimi-rag-es</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>io.github.aimi.rag.workflow</groupId>
             <artifactId>aimi-rag-embedding</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.aimi.rag.workflow</groupId>
+            <artifactId>aimi-rag-open-ai</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
