@@ -12,9 +12,11 @@
     <modules>
         <module>aimi-rag-core</module>
         <module>aimi-rag-ingest</module>
+        <module>aimi-rag-query</module>
         <module>aimi-rag-es</module>
         <module>aimi-rag-open-ai</module>
         <module>aimi-rag-embedding</module>
+        <module>aimi-rag-generation</module>
         <module>aimi-rag-log-jpa</module>
         <module>aimi-rag-log-mybatis</module>
         <module>aimi-rag-integration-test</module>

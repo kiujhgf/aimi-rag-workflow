@@ -20,6 +20,11 @@
         </dependency>
         <dependency>
             <groupId>io.github.aimi.rag.workflow</groupId>
+            <artifactId>aimi-rag-query</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.aimi.rag.workflow</groupId>
             <artifactId>aimi-rag-open-ai</artifactId>
             <version>${project.version}</version>
         </dependency>

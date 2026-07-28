@@ -6,5 +6,7 @@ public enum StepType {
     EMBEDDING,
     STORAGE,
     START,
-    END
+    END,
+    RETRIEVAL,
+    GENERATION
 }
