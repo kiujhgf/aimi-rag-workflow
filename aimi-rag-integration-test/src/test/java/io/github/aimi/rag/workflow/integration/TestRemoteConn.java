@@ -16,6 +16,7 @@ import io.github.aimi.rag.workflow.ingest.model.StorageResult;
 import io.github.aimi.rag.workflow.ingest.step.chunking.FixedSizeChunkingStep;
 import io.github.aimi.rag.workflow.ingest.step.input.StringInputStep;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -31,6 +32,8 @@ import java.util.Map;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@EnabledIfEnvironmentVariable(named = "OPENAI_API_KEY", matches = ".+")
+@EnabledIfEnvironmentVariable(named = "ES_HOST", matches = ".+")
 public class TestRemoteConn {
 
     @Value("${spring.ai.openai.api-key}")

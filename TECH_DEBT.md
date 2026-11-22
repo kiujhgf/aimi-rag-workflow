@@ -1,0 +1,91 @@
+# 未完成任务与技术债务
+
+> 本文件用于集中记录项目中的未完成任务与技术债务，纳入版本控制、随代码一起演进。
+>
+> **编辑约定**：此文件不会被我（AI 助手）随意改动，仅在用户明确要求时才编辑。
+>
+> **概念区分**：
+>
+> - **未完成任务**：并非技术问题，而是可延后、当前阶段无需立即完成的项。
+> - **技术债务**：技术能力不足，无法判定问题是否真实存在，或不知如何修复/解决的项。
+
+***
+
+## 未完成任务（Deferred Work）
+
+### W-001 循环多个图（循环子图）
+
+- **模块/位置**：aimi-rag-core（FlowBuilder / Flow）
+- **优先级**：中
+- **状态**：待处理
+- **说明**：方向明确（支持任意子图作为循环单元），属功能增强，可延后实现
+
+### W-002 上下文压缩 Step（ContextCompressionStep）
+
+- **模块/位置**：aimi-rag-generation
+- **优先级**：中
+- **状态**：待处理
+- **说明**：方案二下 `ChatGenerationStep` 仅透传 `List<Message>`，压缩需作为独立 Step 实现；方向明确（LLM 摘要压缩、重要性/时间衰减、多级记忆），可延后实现
+
+### W-003 aimi-rag-log 可插拔化（去 JPA/MyBatis 依赖）
+
+- **模块/位置**：aimi-rag-log
+- **优先级**：中
+- **状态**：已完成（`refactor-log-spring-jdbc`）
+- **说明**：已统一为纯 `spring-jdbc` 模块，通过显式方言支持多种数据库；旧 JPA/MyBatis 模块已移除，仓储、监听器与建表均由使用方手动构造或调用
+
+### W-004 会话记忆管理 Step（记忆加载 / 写回）
+
+- **模块/位置**：aimi-rag-generation
+- **优先级**：中
+- **状态**：待处理
+- **说明**：方案二下多轮记忆由独立 Step 负责——按 `conversation_id` 读取历史并拼装完整 `List<Message>` 放入 ctx，本轮结束后写回存储，与 `ChatGenerationStep` 解耦；方向明确，可延后实现
+
+### W-005 ChatGenerationStep 暴露 token 消耗（Usage）
+
+- **模块/位置**：aimi-rag-generation（ChatGenerationStep）
+- **优先级**：中
+- **状态**：待处理
+- **说明**：当前 `doProcess` 仅返回文本，丢弃了 `ChatResponse.getMetadata().getUsage()`；需提供方式将 promptTokens / completionTokens / totalTokens 写入 FlowContext 或富结果 DTO；方向明确，可延后实现
+
+### W-006 ChatGenerationStep 支持 LLM 结构化输出
+
+- **模块/位置**：aimi-rag-generation（ChatGenerationStep）
+- **优先级**：中
+- **状态**：已完成（`StructuredChatGenerationStep`，基于 `ChatClient.entity()`）
+- **说明**：已新增 `StructuredChatGenerationStep<T>`，通过 `ChatClient...call().entity(StructuredOutputConverter)` 返回结构化对象；`ChatGenerationStep` 保持文本输出
+
+## 技术债务（Technical Debt）
+
+### TD-001 Flow 嵌套支持（子流程）
+
+- **位置**：aimi-rag-core（Flow / Step）
+- **类型**：待明确方案
+- **优先级**：中
+- **状态**：待处理
+- **说明**：初步方案为新增包装 Step（`FlowStep`/`SubFlowStep`）传入 `Flow`，但不确定能否覆盖嵌套 + 循环 / 并行等所有场景，且输入/输出映射、`FlowContext` 共享或隔离、监听器/持久化/错误路由如何衔接尚未明确
+
+### TD-002 JdbcChatMemory 是否可避免 spring-jdbc 依赖
+
+- **位置**：aimi-rag-generation
+- **类型**：待学习调研
+- **优先级**：低
+- **状态**：待处理
+- **说明**：不确定能否用纯 JDBC（`DataSource`/`Connection`）或复用现有 log 设施替代 `JdbcTemplate`，需调研后再判定
+
+### TD-003 ChatMemory 的「历史」与「记忆」区分
+
+- **位置**：aimi-rag-generation
+- **类型**：待明确方案
+- **优先级**：低
+- **状态**：待处理
+- **说明**：Spring AI `ChatMemory` 只存原始对话历史而非语义化记忆；不确定「历史」与「记忆」该分开存还是合并存，存储模型尚不明确
+
+### TD-004 多模态支持
+
+- **位置**：aimi-rag-mineru（唯一的文件→文本入口）；aimi-rag-ingest、aimi-rag-embedding、aimi-rag-es、aimi-rag-query、aimi-rag-generation（整条链路仅处理文本）
+- **类型**：待明确方案（代码与文档未定义多模态的范围、目标形态与实现方式）
+- **优先级**：待补充（代码与文档中没有优先级依据）
+- **状态**：待处理（代码中尚无多模态实现，也无相关变更记录）
+- **说明**：现状——① 非文本入口仅有 `MineruParseStep`，输入 `List<SourceFile>`（文件名+字节），经 MinerU `/file_parse` 解析后只从 `results.<文件名>.md_content` 提取纯文本 `List<String>`，请求固定 `return_md=true`；`mineru-document-parse-step` 提案已明确「不包含」解析后图片/表格本地落盘、多格式产物（docx/html/latex/zip）下载与异步任务。② ingest 链路为纯文本：`InputStep`/`ChunkingStep` 基于 `List<String>`，`Chunk` 仅含文本 `content` + `metadata`，`TextToEmbed.text` 为 `String`，`IngestOpenAiEmbeddingStep` 只对文本调用 OpenAI 嵌入；`precomputed-vector-support` 中的「图像向量」实际是 `name="image"` 的文本向量，而非图像 embedding。③ 存储/检索为纯文本：`StorageItem.getContent()` 返回 `String`，`DefaultStorageItemConverter` 写入 `content` + `_vector`，`SearchResult` 仅有文本 `content` 与 `score`。④ 生成侧 `ChatGenerationStep` 虽原样透传 `List<Message>`，但项目内只构造 `SystemMessage`/`UserMessage` 纯文本消息，未引用 Spring AI 的 `Media`/多模态能力。缺口——图片、PDF 扫描页、音视频均无原生输入与向量化；解析出的 markdown 图片引用未下载/落盘；无图搜文、文搜图等跨模态检索；无多模态 LLM 生成与相关测试；ES 侧无图像字段与多向量 mapping 约定（`<name>_vector` 需调用方自建 mapping）。
+

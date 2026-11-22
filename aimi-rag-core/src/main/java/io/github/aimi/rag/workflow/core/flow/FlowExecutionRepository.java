@@ -6,43 +6,47 @@ import java.util.List;
 
 /**
  * Repository for persisting flow execution state.
- * Implementations (e.g. JDBC, JPA) provide concrete storage.
- * Injected into PersistentExecutionListener via Spring configuration.
+ * Implementations provide concrete storage and are used by execution listeners
+ * to persist lifecycle events.
+ *
+ * <p>The execution id is read from the {@link FlowContext} (under
+ * {@link io.github.aimi.rag.workflow.core.model.FlowContextKeys#EXECUTION_ID})
+ * rather than passed as a parameter, since {@code Flow.execute()} generates it.
  */
 public interface FlowExecutionRepository {
 
     /**
-     * Create a new flow execution record.
+     * Create a new flow execution record using the execution id already stored
+     * in the context.
      *
      * @param flowName     name of the flow
-     * @param inputContext the initial input context
-     * @return the generated execution id
+     * @param inputContext the initial input context carrying the execution id
      */
-    String createExecution(String flowName, FlowContext inputContext);
+    void createExecution(String flowName, FlowContext inputContext);
 
     /**
      * Save a successful step execution record.
      *
-     * @param executionId flow execution id
-     * @param record      step execution details
+     * @param context the flow context carrying the execution id
+     * @param record  step execution details
      */
-    void saveStepExecution(String executionId, StepExecutionRecord record);
+    void saveStepExecution(FlowContext context, StepExecutionRecord record);
 
     /**
      * Save a step failure record.
      *
-     * @param executionId flow execution id
-     * @param record      step failure details
+     * @param context the flow context carrying the execution id
+     * @param record  step failure details
      */
-    void saveStepFailure(String executionId, StepFailureRecord record);
+    void saveStepFailure(FlowContext context, StepFailureRecord record);
 
     /**
      * Update the overall execution status (RUNNING, COMPLETED, FAILED).
      *
-     * @param executionId flow execution id
-     * @param status      new execution status
+     * @param context the flow context carrying the execution id
+     * @param status  new execution status
      */
-    void updateExecutionStatus(String executionId, String status);
+    void updateExecutionStatus(FlowContext context, String status);
 
     /**
      * Get the execution history (all step records) for a flow execution.

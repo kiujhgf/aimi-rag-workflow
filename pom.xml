@@ -17,9 +17,9 @@
         <module>aimi-rag-open-ai</module>
         <module>aimi-rag-embedding</module>
         <module>aimi-rag-generation</module>
-        <module>aimi-rag-log-jpa</module>
-        <module>aimi-rag-log-mybatis</module>
+        <module>aimi-rag-log</module>
         <module>aimi-rag-integration-test</module>
+        <module>aimi-rag-mineru</module>
     </modules>
 
     <properties>
@@ -67,11 +67,6 @@
                 <groupId>org.jgrapht</groupId>
                 <artifactId>jgrapht-core</artifactId>
                 <version>${jgrapht.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.mybatis.spring.boot</groupId>
-                <artifactId>mybatis-spring-boot-starter</artifactId>
-                <version>3.0.3</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

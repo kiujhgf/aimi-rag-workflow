@@ -1,30 +1,26 @@
 package io.github.aimi.rag.workflow.ingest.step.embedding;
 
 import io.github.aimi.rag.workflow.core.exception.StepExecuteException;
-import io.github.aimi.rag.workflow.core.exception.StepValidationException;
 import io.github.aimi.rag.workflow.core.model.FlowCategory;
 import io.github.aimi.rag.workflow.core.model.FlowContext;
 import io.github.aimi.rag.workflow.core.model.StepType;
 import io.github.aimi.rag.workflow.core.resolver.InputResolver;
 import io.github.aimi.rag.workflow.core.resolver.OutputResolver;
 import io.github.aimi.rag.workflow.core.step.AbstractStep;
-import io.github.aimi.rag.workflow.core.step.Step;
-import io.github.aimi.rag.workflow.ingest.model.Chunk;
-import io.github.aimi.rag.workflow.ingest.model.Embedding;
 
 import java.util.List;
 
-public abstract class IngestEmbeddingStep extends AbstractStep<List<Chunk>, List<Embedding>> {
+public abstract class IngestEmbeddingStep extends AbstractStep<List<String>, List<float[]>> {
 
     protected IngestEmbeddingStep() {
         super();
     }
 
-    protected IngestEmbeddingStep(InputResolver<List<Chunk>> inputResolver) {
+    protected IngestEmbeddingStep(InputResolver<List<String>> inputResolver) {
         super(inputResolver);
     }
 
-    protected IngestEmbeddingStep(InputResolver<List<Chunk>> inputResolver, OutputResolver<List<Embedding>> outputResolver) {
+    protected IngestEmbeddingStep(InputResolver<List<String>> inputResolver, OutputResolver<List<float[]>> outputResolver) {
         super(inputResolver, outputResolver);
     }
 
@@ -45,10 +41,10 @@ public abstract class IngestEmbeddingStep extends AbstractStep<List<Chunk>, List
 
     @Override
     @SuppressWarnings("unchecked")
-    public Class<List<Chunk>> getInputType() {
-        return (Class<List<Chunk>>) (Class<?>) List.class;
+    public Class<List<String>> getInputType() {
+        return (Class<List<String>>) (Class<?>) List.class;
     }
 
     @Override
-    protected abstract List<Embedding> doProcess(List<Chunk> input, FlowContext context) throws StepExecuteException;
+    protected abstract List<float[]> doProcess(List<String> input, FlowContext context) throws StepExecuteException;
 }

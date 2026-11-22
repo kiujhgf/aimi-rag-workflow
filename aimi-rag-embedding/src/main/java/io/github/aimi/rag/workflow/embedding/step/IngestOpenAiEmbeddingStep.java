@@ -2,24 +2,21 @@ package io.github.aimi.rag.workflow.embedding.step;
 
 import io.github.aimi.rag.workflow.core.exception.StepExecuteException;
 import io.github.aimi.rag.workflow.core.model.FlowContext;
-import io.github.aimi.rag.workflow.core.resolver.DefaultInputResolver;
-import io.github.aimi.rag.workflow.core.resolver.DefaultOutputResolver;
 import io.github.aimi.rag.workflow.core.resolver.InputResolver;
 import io.github.aimi.rag.workflow.core.resolver.OutputResolver;
-import io.github.aimi.rag.workflow.ingest.model.Chunk;
-import io.github.aimi.rag.workflow.ingest.model.Embedding;
 import io.github.aimi.rag.workflow.ingest.step.embedding.IngestEmbeddingStep;
+import io.github.aimi.rag.workflow.ingest.step.embedding.resolver.ChunkEmbeddingOutputResolver;
+import io.github.aimi.rag.workflow.ingest.step.embedding.resolver.ChunkTextInputResolver;
 import org.springframework.ai.embedding.EmbeddingModel;
 
 import java.util.List;
-import java.util.stream.IntStream;
 
 public class IngestOpenAiEmbeddingStep extends IngestEmbeddingStep {
 
     private final OpenAiEmbeddingBaseStep baseStep;
     private final int batchSize;
 
-    private IngestOpenAiEmbeddingStep(EmbeddingModel embeddingModel, int batchSize, InputResolver<List<Chunk>> inputResolver, OutputResolver<List<Embedding>> outputResolver) {
+    private IngestOpenAiEmbeddingStep(EmbeddingModel embeddingModel, int batchSize, InputResolver<List<String>> inputResolver, OutputResolver<List<float[]>> outputResolver) {
         super(inputResolver, outputResolver);
         this.baseStep = new OpenAiEmbeddingBaseStep(embeddingModel) {};
         this.batchSize = batchSize;
@@ -39,19 +36,15 @@ public class IngestOpenAiEmbeddingStep extends IngestEmbeddingStep {
     }
 
     @Override
-    protected List<Embedding> doProcess(List<Chunk> input, FlowContext context) throws StepExecuteException {
-        List<String> texts = input.stream().map(Chunk::getContent).toList();
-        List<float[]> vectors = baseStep.batchEmbed(texts, batchSize);
-        return IntStream.range(0, input.size())
-                .mapToObj(i -> new Embedding(input.get(i), vectors.get(i)))
-                .toList();
+    protected List<float[]> doProcess(List<String> input, FlowContext context) throws StepExecuteException {
+        return baseStep.batchEmbed(input, batchSize);
     }
 
     public static class Builder {
         private final EmbeddingModel embeddingModel;
         private int batchSize = 10;
-        private InputResolver<List<Chunk>> inputResolver = new DefaultInputResolver.ByKeyResolver<>("chunks", List.class, "open-ai-embedding");
-        private OutputResolver<List<Embedding>> outputResolver = new DefaultOutputResolver<>("embeddings");
+        private InputResolver<List<String>> inputResolver = new ChunkTextInputResolver("chunks");
+        private OutputResolver<List<float[]>> outputResolver = new ChunkEmbeddingOutputResolver("chunks", "embeddings");
 
         private Builder(EmbeddingModel embeddingModel) {
             this.embeddingModel = embeddingModel;
@@ -62,12 +55,12 @@ public class IngestOpenAiEmbeddingStep extends IngestEmbeddingStep {
             return this;
         }
 
-        public Builder inputResolver(InputResolver<List<Chunk>> inputResolver) {
+        public Builder inputResolver(InputResolver<List<String>> inputResolver) {
             this.inputResolver = inputResolver;
             return this;
         }
 
-        public Builder outputResolver(OutputResolver<List<Embedding>> outputResolver) {
+        public Builder outputResolver(OutputResolver<List<float[]>> outputResolver) {
             this.outputResolver = outputResolver;
             return this;
         }
@@ -83,8 +76,8 @@ public class IngestOpenAiEmbeddingStep extends IngestEmbeddingStep {
         private String model;
         private Integer dimensions;
         private int batchSize = 10;
-        private InputResolver<List<Chunk>> inputResolver = new DefaultInputResolver.ByKeyResolver<>("chunks", List.class, "open-ai-embedding");
-        private OutputResolver<List<Embedding>> outputResolver = new DefaultOutputResolver<>("embeddings");
+        private InputResolver<List<String>> inputResolver = new ChunkTextInputResolver("chunks");
+        private OutputResolver<List<float[]>> outputResolver = new ChunkEmbeddingOutputResolver("chunks", "embeddings");
 
         private ConfigurableBuilder() {}
 
@@ -113,12 +106,12 @@ public class IngestOpenAiEmbeddingStep extends IngestEmbeddingStep {
             return this;
         }
 
-        public ConfigurableBuilder inputResolver(InputResolver<List<Chunk>> inputResolver) {
+        public ConfigurableBuilder inputResolver(InputResolver<List<String>> inputResolver) {
             this.inputResolver = inputResolver;
             return this;
         }
 
-        public ConfigurableBuilder outputResolver(OutputResolver<List<Embedding>> outputResolver) {
+        public ConfigurableBuilder outputResolver(OutputResolver<List<float[]>> outputResolver) {
             this.outputResolver = outputResolver;
             return this;
         }

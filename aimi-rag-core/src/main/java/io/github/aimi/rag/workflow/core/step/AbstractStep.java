@@ -3,6 +3,7 @@ package io.github.aimi.rag.workflow.core.step;
 import io.github.aimi.rag.workflow.core.exception.ResolveInputException;
 import io.github.aimi.rag.workflow.core.exception.StepExecuteException;
 import io.github.aimi.rag.workflow.core.model.FlowContext;
+import io.github.aimi.rag.workflow.core.model.FlowContextKeys;
 import io.github.aimi.rag.workflow.core.model.FlowCategory;
 import io.github.aimi.rag.workflow.core.model.StepStatus;
 import io.github.aimi.rag.workflow.core.resolver.DefaultInputResolver;
@@ -54,6 +55,7 @@ public abstract class AbstractStep<I, O> implements Step<I, O> {
 
     @Override
     public StepStatus process(FlowContext context) throws StepExecuteException {
+        context.set(FlowContextKeys.CURRENT_STEP, getName());
         int attempts = 0;
         Exception lastException = null;
 

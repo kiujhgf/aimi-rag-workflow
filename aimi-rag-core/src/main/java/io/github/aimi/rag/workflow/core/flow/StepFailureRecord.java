@@ -7,23 +7,17 @@ import java.time.Instant;
  */
 public class StepFailureRecord {
 
-    private final String executionId;
     private final String stepName;
     private final String errorMessage;
     private final String errorStack;
     private final Instant timestamp;
 
-    public StepFailureRecord(String executionId, String stepName,
+    public StepFailureRecord(String stepName,
                              String errorMessage, String errorStack, Instant timestamp) {
-        this.executionId = executionId;
         this.stepName = stepName;
         this.errorMessage = errorMessage;
         this.errorStack = errorStack;
         this.timestamp = timestamp;
-    }
-
-    public String getExecutionId() {
-        return executionId;
     }
 
     public String getStepName() {
@@ -47,16 +41,10 @@ public class StepFailureRecord {
     }
 
     public static class Builder {
-        private String executionId;
         private String stepName;
         private String errorMessage;
         private String errorStack;
         private Instant timestamp;
-
-        public Builder executionId(String executionId) {
-            this.executionId = executionId;
-            return this;
-        }
 
         public Builder stepName(String stepName) {
             this.stepName = stepName;
@@ -79,7 +67,7 @@ public class StepFailureRecord {
         }
 
         public StepFailureRecord build() {
-            return new StepFailureRecord(executionId, stepName,
+            return new StepFailureRecord(stepName,
                     errorMessage, errorStack, timestamp);
         }
     }

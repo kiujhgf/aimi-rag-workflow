@@ -10,6 +10,8 @@ import io.github.aimi.rag.workflow.es.converter.DefaultStorageItemConverter;
 import io.github.aimi.rag.workflow.ingest.step.chunking.FixedSizeChunkingStep;
 import io.github.aimi.rag.workflow.ingest.step.chunking.RecursiveCharacterChunkingStep;
 import io.github.aimi.rag.workflow.ingest.step.embedding.IngestEmbeddingStep;
+import io.github.aimi.rag.workflow.ingest.step.embedding.resolver.ChunkEmbeddingOutputResolver;
+import io.github.aimi.rag.workflow.ingest.step.embedding.resolver.ChunkTextInputResolver;
 import io.github.aimi.rag.workflow.ingest.step.input.StringInputStep;
 import io.github.aimi.rag.workflow.ingest.step.storage.StorageStep;
 import org.junit.jupiter.api.DisplayName;
@@ -124,15 +126,17 @@ class ConverterAndFlowTest {
         }
 
         static IngestEmbeddingStep embedding() {
-            return new IngestEmbeddingStep(new DefaultInputResolver.ByKeyResolver<>("chunks", List.class, "test-embedding")) {
+            return new IngestEmbeddingStep(
+                    new ChunkTextInputResolver("chunks"),
+                    new ChunkEmbeddingOutputResolver("chunks", "embeddings")) {
                 @Override
                 public String getName() { return "test-embedding"; }
 
                 @Override
-                protected List<Embedding> doProcess(List<Chunk> input, FlowContext context) {
-                    List<Embedding> result = new ArrayList<>();
-                    for (Chunk c : input) {
-                        result.add(new Embedding(c, new float[]{1.0f}));
+                protected List<float[]> doProcess(List<String> input, FlowContext context) {
+                    List<float[]> result = new ArrayList<>();
+                    for (String text : input) {
+                        result.add(new float[]{1.0f});
                     }
                     return result;
                 }

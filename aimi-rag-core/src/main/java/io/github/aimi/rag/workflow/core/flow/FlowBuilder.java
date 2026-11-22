@@ -33,6 +33,7 @@ public class FlowBuilder {
     private FlowDecider loopDecider;
     private FlowNode loopFirstStepNode;
     private LoopConfig loopConfig;
+    private final List<PendingLoopContinue> pendingLoopContinues = new ArrayList<>();
 
     private boolean inParallel = false;
     private FlowNode parallelStartNode;
@@ -127,6 +128,77 @@ public class FlowBuilder {
         return new TransitionBuilder(this, currentNode, status);
     }
 
+    /**
+     * Binds an error-handling step to the current step. When the current step
+     * fails (after retries), the flow routes to {@code errorStep} instead of
+     * aborting, and a StepErrorInfo is written into the FlowContext.
+     * The chain continues on the normal path from the current step.
+     */
+    public FlowBuilder onFailure(Step<?, ?> errorStep) {
+        ensureCurrentIsStep("onFailure()");
+        FlowNode target = getOrCreateStepNodeForTransition(errorStep);
+        graph.addEdge(currentNode, target, new FlowEdge(FlowEdge.ERROR));
+        return this;
+    }
+
+    /**
+     * Routes the flow to END when the current step fails (after retries).
+     */
+    public FlowBuilder onFailureToEnd() {
+        ensureCurrentIsStep("onFailureToEnd()");
+        FlowNode target = getOrCreateStepNodeForTransition(Flow.END_STEP);
+        graph.addEdge(currentNode, target, new FlowEdge(FlowEdge.ERROR));
+        return this;
+    }
+
+    private void ensureCurrentIsStep(String operation) {
+        if (currentNode == null || !currentNode.isStep()) {
+            throw new FlowValidationException(operation + " can only be called after a step");
+        }
+    }
+
+    /**
+     * Continue semantics inside a loop: when the current step fails (after
+     * retries), the flow routes directly to the loop decider, skipping the
+     * remaining body steps of this iteration. The back edge is resolved to
+     * the loop decider node when endLoop() is called.
+     */
+    public FlowBuilder onFailureToLoopStart() {
+        ensureInLoopStep("onFailureToLoopStart()");
+        pendingLoopContinues.add(new PendingLoopContinue(currentNode, null));
+        return this;
+    }
+
+    /**
+     * Continue semantics inside a loop with an error handler: when the current
+     * step fails (after retries), the flow routes to {@code errorHandler} first,
+     * then back to the loop decider for the next-iteration decision.
+     */
+    public FlowBuilder onFailureToLoopStart(Step<?, ?> errorHandler) {
+        ensureInLoopStep("onFailureToLoopStart()");
+        FlowNode handlerNode = getOrCreateStepNodeForTransition(errorHandler);
+        graph.addEdge(currentNode, handlerNode, new FlowEdge(FlowEdge.ERROR));
+        pendingLoopContinues.add(new PendingLoopContinue(currentNode, handlerNode));
+        return this;
+    }
+
+    private void ensureInLoopStep(String operation) {
+        if (!inLoop) {
+            throw new FlowValidationException(operation + " can only be called inside loop()/endLoop()");
+        }
+        ensureCurrentIsStep(operation);
+    }
+
+    private static class PendingLoopContinue {
+        private final FlowNode source;
+        private final FlowNode handler;
+
+        private PendingLoopContinue(FlowNode source, FlowNode handler) {
+            this.source = source;
+            this.handler = handler;
+        }
+    }
+
     public FlowBuilder from(Step<?, ?> step) {
         FlowNode node = stepNodeMap.get(step);
         if (node == null) {
@@ -178,6 +250,18 @@ public class FlowBuilder {
         }
 
         graph.addEdge(deciderNode, loopFirstStepNode, new FlowEdge("LOOP"));
+
+        // Resolve continue-on-failure edges declared via onFailureToLoopStart():
+        // with a handler, the handler leads to the decider via a normal edge;
+        // without one, the failed step routes to the decider via an ERROR edge.
+        for (PendingLoopContinue pending : pendingLoopContinues) {
+            if (pending.handler != null) {
+                graph.addEdge(pending.handler, deciderNode, new FlowEdge());
+            } else {
+                graph.addEdge(pending.source, deciderNode, new FlowEdge(FlowEdge.ERROR));
+            }
+        }
+        pendingLoopContinues.clear();
 
         currentNode = deciderNode;
 

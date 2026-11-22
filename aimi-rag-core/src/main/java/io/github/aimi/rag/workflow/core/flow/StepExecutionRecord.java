@@ -9,7 +9,6 @@ import java.time.Instant;
  */
 public class StepExecutionRecord {
 
-    private final String executionId;
     private final String stepName;
     private final StepStatus status;
     private final Instant startTime;
@@ -17,20 +16,15 @@ public class StepExecutionRecord {
     private final Object input;
     private final Object output;
 
-    public StepExecutionRecord(String executionId, String stepName, StepStatus status,
+    public StepExecutionRecord(String stepName, StepStatus status,
                                Instant startTime, Instant endTime,
                                Object input, Object output) {
-        this.executionId = executionId;
         this.stepName = stepName;
         this.status = status;
         this.startTime = startTime;
         this.endTime = endTime;
         this.input = input;
         this.output = output;
-    }
-
-    public String getExecutionId() {
-        return executionId;
     }
 
     public String getStepName() {
@@ -62,18 +56,12 @@ public class StepExecutionRecord {
     }
 
     public static class Builder {
-        private String executionId;
         private String stepName;
         private StepStatus status;
         private Instant startTime;
         private Instant endTime;
         private Object input;
         private Object output;
-
-        public Builder executionId(String executionId) {
-            this.executionId = executionId;
-            return this;
-        }
 
         public Builder stepName(String stepName) {
             this.stepName = stepName;
@@ -106,7 +94,7 @@ public class StepExecutionRecord {
         }
 
         public StepExecutionRecord build() {
-            return new StepExecutionRecord(executionId, stepName, status,
+            return new StepExecutionRecord(stepName, status,
                     startTime, endTime, input, output);
         }
     }

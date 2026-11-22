@@ -1,7 +1,10 @@
 package io.github.aimi.rag.workflow.core.flow;
 
 import io.github.aimi.rag.workflow.core.exception.FlowException;
+import io.github.aimi.rag.workflow.core.exception.StepExecuteException;
 import io.github.aimi.rag.workflow.core.model.FlowContext;
+import io.github.aimi.rag.workflow.core.model.FlowContextKeys;
+import io.github.aimi.rag.workflow.core.model.StepErrorInfo;
 import io.github.aimi.rag.workflow.core.model.StepStatus;
 import io.github.aimi.rag.workflow.core.step.EndStep;
 import io.github.aimi.rag.workflow.core.step.ParallelEndStep;
@@ -15,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
@@ -60,6 +64,7 @@ public class Flow {
         if (context == null) {
             context = FlowContext.create();
         }
+        context.setIfAbsent(FlowContextKeys.EXECUTION_ID, UUID.randomUUID().toString());
 
         notifyFlowStart(context);
 
@@ -96,6 +101,12 @@ public class Flow {
                     if (status == StepStatus.FAILED) {
                         FlowException ex = new FlowException("Flow failed at step: " + stepName);
                         notifyStepFailure(stepName, ex, context);
+                        FlowNode errorNode = findErrorNode(current);
+                        if (errorNode != null) {
+                            context.set(StepErrorInfo.CONTEXT_KEY, new StepErrorInfo(stepName, ex));
+                            current = errorNode;
+                            continue;
+                        }
                         throw ex;
                     }
 
@@ -120,6 +131,15 @@ public class Flow {
 
                     current = next;
 
+                } catch (StepExecuteException e) {
+                    FlowNode errorNode = findErrorNode(current);
+                    notifyStepFailure(stepName, e, context);
+                    if (errorNode != null) {
+                        context.set(StepErrorInfo.CONTEXT_KEY, new StepErrorInfo(stepName, e));
+                        current = errorNode;
+                        continue;
+                    }
+                    throw new FlowException("Flow failed at step: " + stepName, e);
                 } catch (FlowException e) {
                     notifyStepFailure(stepName, e, context);
                     throw e;
@@ -178,6 +198,19 @@ public class Flow {
             }
         }
 
+        return null;
+    }
+
+    /**
+     * Finds the error-handling target of a node via its ERROR edge,
+     * or null when the node has no error route.
+     */
+    private FlowNode findErrorNode(FlowNode node) {
+        for (FlowEdge edge : graph.outgoingEdgesOf(node)) {
+            if (edge.isError()) {
+                return graph.getEdgeTarget(edge);
+            }
+        }
         return null;
     }
 
@@ -252,9 +285,27 @@ public class Flow {
                 String result = current.decide(context);
                 current = findNextNode(current, result);
             } else {
-                StepStatus status = current.execute(context);
+                StepStatus status;
+                try {
+                    status = current.execute(context);
+                } catch (StepExecuteException e) {
+                    FlowNode errorNode = findErrorNode(current);
+                    if (errorNode == null) {
+                        throw e;
+                    }
+                    context.set(StepErrorInfo.CONTEXT_KEY, new StepErrorInfo(current.getName(), e));
+                    current = errorNode;
+                    continue;
+                }
                 if (status == StepStatus.FAILED) {
-                    throw new FlowException("Branch failed at step: " + current.getName());
+                    FlowNode errorNode = findErrorNode(current);
+                    if (errorNode == null) {
+                        throw new FlowException("Branch failed at step: " + current.getName());
+                    }
+                    context.set(StepErrorInfo.CONTEXT_KEY, new StepErrorInfo(current.getName(),
+                            new FlowException("Step '" + current.getName() + "' returned FAILED status")));
+                    current = errorNode;
+                    continue;
                 }
                 if (status == StepStatus.END) {
                     break;

@@ -4,6 +4,12 @@ public class FlowEdge {
 
     public static final String WILDCARD = "*";
 
+    /**
+     * Reserved status for error-routing edges created by onFailure().
+     * Error edges are never selected during normal routing.
+     */
+    public static final String ERROR = "ERROR";
+
     private final String status;
 
     public FlowEdge() {
@@ -20,6 +26,10 @@ public class FlowEdge {
 
     public boolean isWildcard() {
         return WILDCARD.equals(status);
+    }
+
+    public boolean isError() {
+        return ERROR.equals(status);
     }
 
     @Override

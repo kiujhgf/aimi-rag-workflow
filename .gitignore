@@ -41,5 +41,8 @@ Thumbs.db
 
 test-cases/*.sqlite
 
+.env
+application-test-local.yml
+
 .mvn/timing.properties
 .mvn/wrapper/maven-wrapper.jar
