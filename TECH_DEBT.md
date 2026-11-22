@@ -55,6 +55,14 @@
 - **状态**：已完成（`StructuredChatGenerationStep`，基于 `ChatClient.entity()`）
 - **说明**：已新增 `StructuredChatGenerationStep<T>`，通过 `ChatClient...call().entity(StructuredOutputConverter)` 返回结构化对象；`ChatGenerationStep` 保持文本输出
 
+### W-007 aimi-rag-log Spring Boot Starter 自动装配
+
+- **模块/位置**：aimi-rag-log-spring-boot-starter / aimi-rag-log
+- **优先级**：中
+- **状态**：已完成（`add-log-spring-boot-starter`）
+- **说明**：当前 `aimi-rag-log` 按约定不提供任何 AutoConfiguration / 自动注入 / 配置项，使用方需手动创建 `LogSchemaInitializer`、`FlowExecutionJpaRepository`、`PersistentExecutionListener` 并自行调用 `initialize()` 与 `flow.addListener(...)`。可另建独立 starter 模块，将这些装配收敛到自动配置中，方便 Spring Boot 项目开箱使用。需明确：① 配置项范围（方言覆盖、`flow_name`、是否启动时建表、输入快照的 includeKeys 与大小上限、是否自动注册监听器）；② 与现有 `DataSource` 的协作方式（`@ConditionalOnSingleCandidate`、多数据源时如何选择）；③ 全部 Bean 使用 `@ConditionalOnMissingBean` 允许用户覆盖；④ starter 自身的 Spring Boot 版本与依赖边界，避免把 Boot 依赖反向引入 `aimi-rag-log`；⑤ 自动建表默认关闭还是开启（`initialize()` 失败仅 WARN，开启后可能掩盖结构问题）。
+- **实现**：新增 `aimi-rag-log-spring-boot-starter`。`LogPersistenceAutoConfiguration` 自动提供 `FlowExecutionRepository`、`PersistentExecutionListener` 与 `LogSchemaInitializer`，并通过 `BeanPostProcessor` 把容器内所有 `FlowExecutionListener` 挂到所有 Spring 管理的 `Flow` bean；全部 Bean 可覆盖，`aimi.rag.log.enabled=false` 可关闭。数据源支持单库/`@Primary`，或用 `aimi.rag.log.data-source-bean-name` 显式指定。`aimi.rag.log.initialize-schema` 默认 `true`，启动时调用 `LogSchemaInitializer.initialize()`；`flow_name` 与输入快照配置暂未提供。
+
 ## 技术债务（Technical Debt）
 
 ### TD-001 Flow 嵌套支持（子流程）

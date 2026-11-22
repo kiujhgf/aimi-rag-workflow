@@ -18,6 +18,7 @@
         <module>aimi-rag-embedding</module>
         <module>aimi-rag-generation</module>
         <module>aimi-rag-log</module>
+        <module>aimi-rag-log-spring-boot-starter</module>
         <module>aimi-rag-integration-test</module>
         <module>aimi-rag-mineru</module>
     </modules>
